@@ -45,7 +45,6 @@
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: #080e1a; }
         ::-webkit-scrollbar-thumb { background: #1e3050; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #2d4a7a; }
 
         .result-card { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: pointer; }
         .result-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(59,130,246,0.3); }
@@ -93,7 +92,6 @@
             color: #475569;
             background: rgba(17,30,51,0.8);
             border-bottom: 1px solid #1e3050;
-            white-space: nowrap;
         }
         .liq-table tbody td {
             padding: 10px 12px;
@@ -106,13 +104,12 @@
             font-weight: 600;
             padding: 3px 8px;
             border-radius: 5px;
-            letter-spacing: -0.02em;
             white-space: nowrap;
             display: inline-block;
         }
         .chip-before { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.18); }
-        .chip-liq    { background: rgba(239,68,68,0.10);   color: #f87171; border: 1px solid rgba(239,68,68,0.2);  }
-        .chip-after  { background: rgba(16,185,129,0.10);  color: #34d399; border: 1px solid rgba(16,185,129,0.18);}
+        .chip-liq    { background: rgba(239,68,68,0.10); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .chip-after  { background: rgba(16,185,129,0.10); color: #34d399; border: 1px solid rgba(16,185,129,0.18); }
         .chip-after-red { background: rgba(239,68,68,0.10); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
 
         .mini-bar-track {
@@ -203,7 +200,7 @@
 
         <!-- KPI CARDS -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="kpi-card rounded-2xl p-6 flex items-center gap-5 relative overflow-hidden" style="background: #0d1626; border: 1px solid #1e3050;">
+            <div class="rounded-2xl p-6 flex items-center gap-5 relative overflow-hidden" style="background: #0d1626; border: 1px solid #1e3050;">
                 <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10" style="background: #3b82f6; transform: translate(20%, -20%);"></div>
                 <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl z-10" style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: #60a5fa;">
                     <i class="fas fa-wallet"></i>
@@ -213,7 +210,7 @@
                     <h3 id="kpiTotalSaldo" class="text-2xl font-display font-bold text-white tracking-tight">R$ 0,00</h3>
                 </div>
             </div>
-            <div class="kpi-card rounded-2xl p-6 flex items-center gap-5 relative overflow-hidden" style="background: #0d1626; border: 1px solid #1e3050;">
+            <div class="rounded-2xl p-6 flex items-center gap-5 relative overflow-hidden" style="background: #0d1626; border: 1px solid #1e3050;">
                 <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10" style="background: #8b5cf6; transform: translate(20%, -20%);"></div>
                 <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl z-10" style="background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); color: #a78bfa;">
                     <i class="fas fa-folder-open"></i>
@@ -223,7 +220,7 @@
                     <h3 id="kpiTotalProcessos" class="text-2xl font-display font-bold text-white tracking-tight">0</h3>
                 </div>
             </div>
-            <div class="kpi-card rounded-2xl p-6 flex items-center gap-5 relative overflow-hidden" style="background: #0d1626; border: 1px solid #1e3050;">
+            <div class="rounded-2xl p-6 flex items-center gap-5 relative overflow-hidden" style="background: #0d1626; border: 1px solid #1e3050;">
                 <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10" style="background: #10b981; transform: translate(20%, -20%);"></div>
                 <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl z-10" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34d399;">
                     <i class="fas fa-building"></i>
@@ -282,7 +279,7 @@
 
 <!-- MODAL -->
 <div id="detailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-    <div class="modal-content w-full max-w-3xl rounded-2xl flex flex-col max-h-[90vh]" style="background: #0d1626; border: 1px solid #1e3050; box-shadow: 0 40px 80px -10px rgba(0,0,0,0.8);">
+    <div class="modal-content w-full max-w-3xl rounded-2xl flex flex-col max-h-[90vh]" style="background: #0d1626; border: 1px solid #1e3050;">
         <div class="px-6 py-4 flex justify-between items-center rounded-t-2xl" style="border-bottom: 1px solid #1e3050; background: rgba(17,30,51,0.5);">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: #60a5fa;">
@@ -318,36 +315,31 @@
 </div>
 
 <script>
-    // ─────────────────────────────────────────────────────────────
-    // URL pública do CSV (a mesma que funciona no primeiro código)
-    // ─────────────────────────────────────────────────────────────
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZQ4K9szuj6x6mVT-xzyk829q1THHXBhugH2xUK5tkAC36tDjTsLPNhDKmdMS29xhZwakRVZotrKwL/pub?gid=0&single=true&output=csv";
 
-    let allData = [];          // tabela principal (colunas A-R)
+    let allData = [];
     let filteredData = [];
     let headersMain = [];
-    let liqTableRows = [];     // tabela de liquidações (colunas T-Z)
+    let liqTableRows = [];
     
-    // Índices das colunas principais (A-R)
-    let IDX_FAVORECIDO = -1;
-    let IDX_PROCESSO   = -1;
-    let IDX_SALDO      = -1;
-    
-    // Índices das colunas de liquidação (T-Z)
-    let IDX_LIQ_FAV    = -1;   // coluna T (índice 19)
-    let IDX_LIQ_PROC   = -1;   // coluna U (índice 20)
-    let IDX_LIQ_ELEM   = -1;   // coluna V (índice 21)
-    let IDX_LIQ_SUBIT  = -1;   // coluna W (índice 22)
-    let IDX_LIQ_COS01  = -1;   // coluna X (índice 23)
-    let IDX_LIQ_PI     = -1;   // coluna Y (índice 24)
-    let IDX_LIQ_TOTAL  = -1;   // coluna Z (índice 25)
+    // Índices dinâmicos (detectados por nome da coluna)
+    let idx = {
+        // Tabela principal
+        favorecido: -1,
+        processo: -1,
+        saldo: -1,
+        // Tabela liquidação (serão detectados automaticamente)
+        liq_fav: -1,
+        liq_proc: -1,
+        liq_elem: -1,
+        liq_subitem: -1,
+        liq_cos01: -1,
+        liq_pi: -1,
+        liq_total: -1
+    };
     
     let allMatches = [];
 
-    const modal = document.getElementById('detailsModal');
-    const body  = document.body;
-
-    // ── Parser CSV robusto (aspas e vírgulas) ──
     function parseCSV(text) {
         const rows = [];
         let inQuotes = false;
@@ -390,43 +382,64 @@
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(num) ? 0 : num);
     }
 
-    // Detecta índices na tabela principal (A-R) - colunas 0 a 17
-    function detectMainIndexes(headerRow) {
-        const h = headerRow.map(c => String(c).toLowerCase().trim());
+    // Detecta automaticamente os índices de ambas as tabelas pelo NOME da coluna
+    function detectAllIndexes(headerRow) {
+        const h = headerRow.map(c => String(c || '').toLowerCase().trim());
+        
+        // Função para encontrar coluna por nome (prioriza match exato, depois contém)
         const find = (...terms) => {
             let i = h.findIndex(c => terms.some(t => c === t.toLowerCase()));
             if (i >= 0) return i;
             return h.findIndex(c => terms.some(t => c.includes(t.toLowerCase())));
         };
-        IDX_FAVORECIDO = find('ne ccor - favorecido', 'favorecido', 'fornecedor');
-        IDX_PROCESSO   = find('ne ccor - núm. processo', 'ne ccor - num. processo', 'processo', 'número');
-        IDX_SALDO      = find('saldo - moeda origem', 'saldo', 'a liquidar', 'valor');
-        console.log('Índices principais:', { IDX_FAVORECIDO, IDX_PROCESSO, IDX_SALDO });
-    }
-
-    // Detecta índices na tabela de liquidações (T-Z)
-    // IMPORTANTE: As colunas T-Z começam no índice 19 (0-based)
-    function detectLiqIndexes(headerRow) {
-        // Mapeamento esperado: T(19)=Favorecido, U(20)=Processo, V(21)=Elemento, W(22)=Subitem, X(23)=Cos01, Y(24)=PI, Z(25)=Total
-        IDX_LIQ_FAV    = 19;
-        IDX_LIQ_PROC   = 20;
-        IDX_LIQ_ELEM   = 21;
-        IDX_LIQ_SUBIT  = 22;
-        IDX_LIQ_COS01  = 23;
-        IDX_LIQ_PI     = 24;
-        IDX_LIQ_TOTAL  = 25;
         
-        // Verifica se os headers estão nos lugares esperados (apenas para log)
-        console.log('Headers T-Z:', headerRow.slice(19, 26));
-        console.log('Índices liquidações (fixos):', { IDX_LIQ_FAV, IDX_LIQ_PROC, IDX_LIQ_ELEM, IDX_LIQ_SUBIT, IDX_LIQ_COS01, IDX_LIQ_PI, IDX_LIQ_TOTAL });
+        // Tabela principal (A-R)
+        idx.favorecido = find('ne ccor - favorecido', 'favorecido', 'fornecedor');
+        idx.processo   = find('ne ccor - núm. processo', 'ne ccor - num. processo', 'processo', 'número');
+        idx.saldo      = find('saldo - moeda origem', 'saldo', 'a liquidar', 'valor');
+        
+        // Tabela de liquidação (T-Z) - procura a partir da coluna 18 (onde começa a segunda tabela)
+        // Procurando pelo cabeçalho "NE CCor - Favorecido" novamente, mas após a primeira ocorrência
+        let firstFavIdx = idx.favorecido;
+        let secondFavIdx = -1;
+        for (let i = firstFavIdx + 1; i < h.length; i++) {
+            if (h[i].includes('favorecido') || h[i].includes('ne ccor')) {
+                secondFavIdx = i;
+                break;
+            }
+        }
+        
+        if (secondFavIdx >= 0) {
+            idx.liq_fav    = secondFavIdx;
+            idx.liq_proc   = secondFavIdx + 1;
+            idx.liq_elem   = secondFavIdx + 2;
+            idx.liq_subitem = secondFavIdx + 3;
+            idx.liq_cos01  = secondFavIdx + 4;
+            idx.liq_pi     = secondFavIdx + 5;
+            idx.liq_total  = secondFavIdx + 6;
+        } else {
+            // Fallback: assume posições fixas (T=19, U=20, V=21, W=22, X=23, Y=24, Z=25)
+            idx.liq_fav    = 19;
+            idx.liq_proc   = 20;
+            idx.liq_elem   = 21;
+            idx.liq_subitem = 22;
+            idx.liq_cos01  = 23;
+            idx.liq_pi     = 24;
+            idx.liq_total  = 25;
+        }
+        
+        console.log('Índices detectados:', idx);
+        console.log('Headers encontrados:', h.map((v,i) => `${i}:${v}`).join(', '));
+        
+        return secondFavIdx;
     }
 
-    // Constrói o mapa de liquidações a partir das linhas da tabela T-Z
+    // Constrói mapa de liquidações a partir da tabela T-Z
     function buildLiquidationMap(liqRows) {
         const map = {};
         for (const row of liqRows) {
-            const fav  = String(row[0] || '').trim();      // coluna T é o índice 0 dentro da tabela T-Z
-            const proc = String(row[1] || '').trim();      // coluna U é o índice 1 dentro da tabela T-Z
+            const fav  = String(row[0] || '').trim();      // primeira coluna da tabela T-Z
+            const proc = String(row[1] || '').trim();      // segunda coluna da tabela T-Z
             if (!fav || !proc || fav === 'Total' || proc === 'Total' || fav === 'undefined') continue;
             const key = fav + '|||' + proc;
             if (!map[key]) {
@@ -434,31 +447,30 @@
                     favorecido: fav,
                     processo: proc,
                     liqTotal: 0,
-                    elemDespesa: row[2] || '',   // coluna V
-                    subitem:     row[3] || '',   // coluna W
-                    cos01:       row[4] || '',   // coluna X
-                    pi:          row[5] || '',   // coluna Y
+                    elemDespesa: row[2] || '',
+                    subitem:     row[3] || '',
+                    cos01:       row[4] || '',
+                    pi:          row[5] || '',
                 };
             }
-            const val = parseBRValue(row[6] || '0'); // coluna Z
+            const val = parseBRValue(row[6] || '0');
             map[key].liqTotal += val;
         }
         return map;
     }
 
-    // Cruza a tabela principal com o mapa de liquidações
     function findMatches(mainRows, liqMap) {
         const seen = new Set();
         const results = [];
         for (const row of mainRows) {
-            const fav  = String(row[IDX_FAVORECIDO] || '').trim();
-            const proc = String(row[IDX_PROCESSO]   || '').trim();
+            const fav  = String(row[idx.favorecido] || '').trim();
+            const proc = String(row[idx.processo]   || '').trim();
             if (!fav || !proc || proc === 'Total') continue;
             const key = fav + '|||' + proc;
             if (liqMap[key] && !seen.has(key)) {
                 seen.add(key);
                 const liqInfo = liqMap[key];
-                const saldoAtual = parseBRValue(row[IDX_SALDO]);
+                const saldoAtual = parseBRValue(row[idx.saldo]);
                 const saldoAntes = saldoAtual + liqInfo.liqTotal;
                 const pct = saldoAntes > 0 ? (liqInfo.liqTotal / saldoAntes) * 100 : 0;
                 results.push({
@@ -479,8 +491,8 @@
     }
 
     function renderLiquidacaoPanel(matches) {
-        const panel          = document.getElementById('liquidacaoPanel');
-        const countBadge     = document.getElementById('liqCountBadge');
+        const panel = document.getElementById('liquidacaoPanel');
+        const countBadge = document.getElementById('liqCountBadge');
         const cardsContainer = document.getElementById('liqCardsContainer');
 
         if (!matches || matches.length === 0) {
@@ -491,14 +503,14 @@
         panel.classList.remove('hidden');
         countBadge.textContent = matches.length + ' ocorrência' + (matches.length > 1 ? 's' : '');
 
-        const totalLiquidado  = matches.reduce((s, m) => s + m.liquidado, 0);
+        const totalLiquidado = matches.reduce((s, m) => s + m.liquidado, 0);
         const totalSaldoAntes = matches.reduce((s, m) => s + m.saldoAntes, 0);
-        const totalSaldoDep   = matches.reduce((s, m) => s + m.saldoDepois, 0);
+        const totalSaldoDep = matches.reduce((s, m) => s + m.saldoDepois, 0);
 
         const tbody = matches.map(m => {
-            const pct    = Math.min(m.pct, 100);
+            const pct = Math.min(m.pct, 100);
             const pctFmt = m.pct.toFixed(1);
-            const isLow  = m.saldoDepois < m.saldoAntes * 0.1;
+            const isLow = m.saldoDepois < m.saldoAntes * 0.1;
             const afterChipClass = isLow ? 'chip-after-red' : 'chip-after';
             const barColor = pct > 90 ? '#ef4444' : pct > 60 ? '#f59e0b' : '#10b981';
             return `
@@ -565,7 +577,7 @@
     }
 
     async function loadData() {
-        const btn  = document.getElementById('refreshBtn');
+        const btn = document.getElementById('refreshBtn');
         const icon = document.getElementById('refreshIcon');
         btn.disabled = true; 
         icon.className = 'fas fa-sync-alt animate-spin';
@@ -583,19 +595,18 @@
 
             const headerRow = allRows[0];
             
-            // =========================================================
-            // TABELA PRINCIPAL: colunas A-R (índices 0 a 17)
-            // =========================================================
-            const MAIN_END = 18;  // índice 18 é a coluna S (vazia/ignorada)
-            headersMain = headerRow.slice(0, MAIN_END);
-            detectMainIndexes(headerRow);
+            // Detecta onde começa a segunda tabela (coluna T)
+            const liqStartCol = detectAllIndexes(headerRow);
             
-            // Filtra linhas com dados válidos na tabela principal
+            // =========================================================
+            // TABELA PRINCIPAL: colunas 0 até liqStartCol - 1
+            // =========================================================
+            headersMain = headerRow.slice(0, liqStartCol);
             allData = [];
             for (let i = 1; i < allRows.length; i++) {
-                const row = allRows[i].slice(0, MAIN_END);
-                const proc = String(row[IDX_PROCESSO] || '').trim();
-                const fav  = String(row[IDX_FAVORECIDO] || '').trim();
+                const row = allRows[i].slice(0, liqStartCol);
+                const proc = String(row[idx.processo] || '').trim();
+                const fav  = String(row[idx.favorecido] || '').trim();
                 if (proc && fav && proc !== 'Total' && fav !== 'Total') {
                     allData.push(row);
                 }
@@ -603,25 +614,19 @@
             filteredData = [...allData];
             
             // =========================================================
-            // TABELA DE LIQUIDAÇÕES: colunas T-Z (índices 19 a 25)
+            // TABELA DE LIQUIDAÇÕES: colunas liqStartCol até liqStartCol+6
             // =========================================================
-            const LIQ_START = 19;  // coluna T
-            const LIQ_END = 26;    // coluna Z + 1
-            
-            detectLiqIndexes(headerRow);
-            
             liqTableRows = [];
             for (let i = 1; i < allRows.length; i++) {
-                const row = allRows[i].slice(LIQ_START, LIQ_END);
-                // Verifica se a linha tem pelo menos um favorecido válido (coluna T)
+                const row = allRows[i].slice(liqStartCol, liqStartCol + 7);
                 const fav = String(row[0] || '').trim();
-                if (fav && fav !== 'Total') {
+                if (fav && fav !== 'Total' && fav !== '') {
                     liqTableRows.push(row);
                 }
             }
             
             console.log(`Linhas de liquidação extraídas: ${liqTableRows.length}`);
-            console.log('Exemplo de linha de liquidação:', liqTableRows[0]);
+            console.log('Exemplos:', liqTableRows.slice(0, 3));
             
             // =========================================================
             // CRUZAMENTO
@@ -654,7 +659,7 @@
         icon.className = 'fas fa-sync-alt';
     }
 
-    // ── FILTROS ──
+    // FILTROS
     document.getElementById('searchGlobal').addEventListener('input', applyFilters);
     document.getElementById('searchProcesso').addEventListener('input', applyFilters);
     document.getElementById('searchFavorecido').addEventListener('input', applyFilters);
@@ -665,8 +670,8 @@
         const fT = document.getElementById('searchFavorecido').value.toLowerCase().trim();
 
         filteredData = allData.filter(row => {
-            const proc = String(row[IDX_PROCESSO] || '').toLowerCase();
-            const fav  = String(row[IDX_FAVORECIDO] || '').toLowerCase();
+            const proc = String(row[idx.processo] || '').toLowerCase();
+            const fav  = String(row[idx.favorecido] || '').toLowerCase();
             const all  = row.join(' ').toLowerCase();
             return proc.includes(pT) && fav.includes(fT) && all.includes(gT);
         });
@@ -686,12 +691,12 @@
     function openModal(rowIndex) {
         const row = filteredData[rowIndex];
         if (!row) return;
-        const processo   = row[IDX_PROCESSO]   || 'N/A';
-        const favorecido = row[IDX_FAVORECIDO] || 'Não Informado';
-        let saldoVal     = parseBRValue(row[IDX_SALDO]);
+        const processo = row[idx.processo] || 'N/A';
+        const favorecido = row[idx.favorecido] || 'Não Informado';
+        let saldoVal = parseBRValue(row[idx.saldo]);
         document.getElementById('modalTitleProcesso').innerText = processo;
         document.getElementById('modalFavorecido').innerText = favorecido;
-        const modalSaldoEl   = document.getElementById('modalSaldo');
+        const modalSaldoEl = document.getElementById('modalSaldo');
         const modalSaldoCard = document.getElementById('modalSaldoCard');
         modalSaldoEl.innerText = formatCurrency(saldoVal);
         if (saldoVal >= 0) {
@@ -704,7 +709,7 @@
         const detailsGrid = document.getElementById('modalExtraDetails');
         let html = '';
         headersMain.forEach((header, i) => {
-            if (i !== IDX_FAVORECIDO && i !== IDX_PROCESSO && i !== IDX_SALDO) {
+            if (i !== idx.favorecido && i !== idx.processo && i !== idx.saldo) {
                 const value = (row[i] !== undefined && row[i] !== '') ? row[i] : '—';
                 html += `<div class="p-3 rounded-xl transition-colors" style="background: rgba(17,30,51,0.6); border: 1px solid #1e3050;">
                             <span class="text-[10px] font-bold uppercase tracking-widest block mb-1" style="color:#334155;">${escapeHtml(header)}</span>
@@ -725,7 +730,7 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
 
     function renderDashboard() {
-        const container  = document.getElementById('resultsContainer');
+        const container = document.getElementById('resultsContainer');
         const emptyState = document.getElementById('emptyState');
         container.innerHTML = '';
         let totalSaldo = 0;
@@ -739,18 +744,18 @@
         container.style.display = 'grid';
         emptyState.style.display = 'none';
         filteredData.forEach((row, index) => {
-            const processo   = row[IDX_PROCESSO]   || 'N/A';
-            const favorecido = row[IDX_FAVORECIDO] || 'Não Informado';
-            let saldoVal     = parseBRValue(row[IDX_SALDO]);
+            const processo = row[idx.processo] || 'N/A';
+            const favorecido = row[idx.favorecido] || 'Não Informado';
+            let saldoVal = parseBRValue(row[idx.saldo]);
             totalSaldo += saldoVal;
             setFavorecidos.add(favorecido);
             const isPositivo = saldoVal >= 0;
             const saldoColor = isPositivo ? '#34d399' : '#f87171';
-            const dotColor   = isPositivo ? '#10b981' : '#ef4444';
-            const iconBg     = isPositivo ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+            const dotColor = isPositivo ? '#10b981' : '#ef4444';
+            const iconBg = isPositivo ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
             const iconBorder = isPositivo ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
-            const iconColor  = isPositivo ? '#34d399' : '#f87171';
-            const iconClass  = isPositivo ? 'fa-check' : 'fa-exclamation';
+            const iconColor = isPositivo ? '#34d399' : '#f87171';
+            const iconClass = isPositivo ? 'fa-check' : 'fa-exclamation';
             const card = document.createElement('div');
             card.className = 'result-card rounded-2xl p-5 flex flex-col h-full';
             card.style.cssText = 'background: #0d1626; border: 1px solid #1e3050;';
@@ -788,8 +793,8 @@
     }
 
     function updateKPIs(saldo, processos, favorecidos) {
-        document.getElementById('kpiTotalSaldo').innerText      = formatCurrency(saldo);
-        document.getElementById('kpiTotalProcessos').innerText  = processos.toLocaleString('pt-BR');
+        document.getElementById('kpiTotalSaldo').innerText = formatCurrency(saldo);
+        document.getElementById('kpiTotalProcessos').innerText = processos.toLocaleString('pt-BR');
         document.getElementById('kpiTotalFavorecidos').innerText = favorecidos.toLocaleString('pt-BR');
     }
 
