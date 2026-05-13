@@ -131,26 +131,53 @@
         let filteredData = [];
         window.allLiq = [];
 
-        // Mapeamento exato da sua folha (Base 0)
-        const H_FAV = 7, M_PROC = 12, R_SALDO = 17; // Main
-        const T_FAV = 19, U_PROC = 20, V_ELEM = 21, W_SUB = 22, Z_TOTAL = 25; // Liq
+        // Variáveis de colunas dinâmicas
+        let IDX_FAV=7, IDX_PROC=12, IDX_SALDO=17;
+        let L_FAV=19, L_PROC=20, L_ELEM=21, L_SUB=22, L_TOTAL=25;
 
-        // Parser Robusto para CSV (Lida com vírgulas dentro de aspas)
+        // Novo Leitor de CSV Avançado (Ignora "Enters" dentro das células)
         function parseCSV(text) {
-            const lines = text.split(/\r?\n/);
-            return lines.map(line => {
-                const row = [];
-                let cell = '', inQuotes = false;
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-                    if (char === '"') inQuotes = !inQuotes;
-                    else if (char === ',' && !inQuotes) {
-                        row.push(cell.trim()); cell = '';
-                    } else cell += char;
-                }
+            const result = [];
+            let row = [];
+            let cell = '';
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+                
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') { cell += '"'; i++; } 
+                    else { inQuotes = !inQuotes; }
+                } 
+                else if (char === ',' && !inQuotes) {
+                    row.push(cell.trim()); cell = '';
+                } 
+                else if ((char === '\\n' || char === '\\r' || char === '\n' || char === '\r') && !inQuotes) {
+                    if ((char === '\r' || char === '\\r') && (nextChar === '\n' || nextChar === '\\n')) i++;
+                    row.push(cell.trim());
+                    if (row.length > 5) result.push(row);
+                    row = []; cell = '';
+                } 
+                else { cell += char; }
+            }
+            if (cell !== '' || row.length > 0) {
                 row.push(cell.trim());
-                return row;
-            }).filter(row => row.length > 5);
+                if (row.length > 5) result.push(row);
+            }
+            return result;
+        }
+
+        function detectIndexes(h) {
+            const lowerH = h.map(c => String(c).toLowerCase().trim());
+            IDX_FAV = lowerH.indexOf('ne ccor - favorecido'); if(IDX_FAV < 0) IDX_FAV = 7;
+            IDX_PROC = lowerH.indexOf('ne ccor - núm. processo'); if(IDX_PROC < 0) IDX_PROC = lowerH.indexOf('ne ccor - num. processo'); if(IDX_PROC < 0) IDX_PROC = 12;
+            IDX_SALDO = lowerH.findIndex(c => c.includes('saldo - moeda origem')); if(IDX_SALDO < 0) IDX_SALDO = 17;
+            
+            L_FAV = lowerH.lastIndexOf('ne ccor - favorecido'); if(L_FAV <= IDX_FAV) L_FAV = 19;
+            L_PROC = lowerH.lastIndexOf('ne ccor - núm. processo'); if(L_PROC <= IDX_PROC) L_PROC = lowerH.lastIndexOf('ne ccor - num. processo'); if(L_PROC <= IDX_PROC) L_PROC = 20;
+            L_ELEM = lowerH.lastIndexOf('elemento despesa'); if(L_ELEM <= 0) L_ELEM = 21;
+            L_SUB = lowerH.lastIndexOf('subitem'); if(L_SUB <= 0) L_SUB = 22;
+            L_TOTAL = lowerH.findIndex(c => c.includes('liquidacoes totais') || c.includes('liquidações totais')); if(L_TOTAL < 0) L_TOTAL = 25;
         }
 
         function parseNum(v) {
@@ -169,21 +196,23 @@
             
             try {
                 const resp = await fetch(CSV_URL + '&cache=' + Date.now());
-                const data = parseCSV(await resp.text());
+                const rawText = await resp.text();
+                const data = parseCSV(rawText);
                 
-                // Dados Principais (Ignora cabeçalho e linhas de Total)
-                allData = data.slice(1).filter(r => r[M_PROC] && r[M_PROC] !== 'Total' && r[H_FAV] !== 'Total');
+                detectIndexes(data[0]);
 
-                // Mapeamento de Liquidações (Coluna Z > 0)
-                window.allLiq = allData.filter(r => parseNum(r[Z_TOTAL]) > 0).map(r => {
-                    const sa = parseNum(r[R_SALDO]), liq = parseNum(r[Z_TOTAL]);
-                    return { fav: r[T_FAV], proc: r[U_PROC], elem: r[V_ELEM], sub: r[W_SUB], val: liq, ant: sa + liq, atu: sa, pct: (liq/(sa+liq+0.01))*100 };
+                allData = data.slice(1).filter(r => r[IDX_PROC] && r[IDX_PROC] !== 'Total' && r[IDX_FAV] !== 'Total');
+
+                window.allLiq = allData.filter(r => r[L_TOTAL] && parseNum(r[L_TOTAL]) > 0).map(r => {
+                    const sa = parseNum(r[IDX_SALDO]);
+                    const liq = parseNum(r[L_TOTAL]);
+                    return { fav: r[L_FAV], proc: r[L_PROC], elem: r[L_ELEM], sub: r[L_SUB], val: liq, ant: sa + liq, atu: sa, pct: (liq/(sa+liq+0.01))*100 };
                 });
 
                 applyFilters();
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('dashboardContent').classList.remove('hidden');
-            } catch (e) { alert("Erro ao carregar folha de cálculo."); }
+            } catch (e) { alert("Erro ao carregar os dados. Detalhe: " + e.message); console.error(e); }
             icon.classList.remove('animate-spin');
         }
 
@@ -193,9 +222,8 @@
             const f = document.getElementById('filterFav').value.toLowerCase().trim();
 
             filteredData = allData.filter(r => {
-                const proc = String(r[M_PROC]).toLowerCase();
-                const fav = String(r[H_FAV]).toLowerCase();
-                // Filtro "Cemig" corrigido: apenas nome ou processo
+                const proc = String(r[IDX_PROC]).toLowerCase();
+                const fav = String(r[IDX_FAV]).toLowerCase();
                 const target = fav + " " + proc;
                 return proc.includes(p) && fav.includes(f) && target.includes(g);
             });
@@ -232,14 +260,14 @@
             grid.innerHTML = '';
             let total = 0;
             filteredData.forEach(r => {
-                const s = parseNum(r[R_SALDO]); total += s;
+                const s = parseNum(r[IDX_SALDO]); total += s;
                 const card = document.createElement('div');
                 card.className = 'bg-darkCard border border-darkBorder p-5 rounded-2xl hover:translate-y-[-4px] transition-all cursor-pointer';
                 card.innerHTML = `
                     <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Processo</p>
-                    <h4 class="text-white font-display font-bold mb-3">${r[M_PROC]}</h4>
+                    <h4 class="text-white font-display font-bold mb-3">${r[IDX_PROC]}</h4>
                     <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Favorecido</p>
-                    <p class="text-sm text-slate-400 line-clamp-1 mb-4">${r[H_FAV]}</p>
+                    <p class="text-sm text-slate-400 line-clamp-1 mb-4">${r[IDX_FAV]}</p>
                     <div class="pt-4 border-t border-darkBorder">
                         <p class="text-lg font-mono font-bold ${s >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${fmt(s)}</p>
                     </div>`;
@@ -247,7 +275,7 @@
             });
             document.getElementById('kpiSaldo').textContent = fmt(total);
             document.getElementById('kpiProc').textContent = filteredData.length;
-            document.getElementById('kpiFav').textContent = new Set(filteredData.map(r => r[H_FAV])).size;
+            document.getElementById('kpiFav').textContent = new Set(filteredData.map(r => r[IDX_FAV])).size;
         }
 
         document.querySelectorAll('input').forEach(i => i.addEventListener('input', applyFilters));
