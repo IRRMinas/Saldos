@@ -315,7 +315,10 @@
 </div>
 
 <script>
+    // URL do CSV (público)
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZQ4K9szuj6x6mVT-xzyk829q1THHXBhugH2xUK5tkAC36tDjTsLPNhDKmdMS29xhZwakRVZotrKwL/pub?gid=0&single=true&output=csv";
+    // Proxy para evitar CORS
+    const PROXY_URL = "https://api.allorigins.win/raw?url=";
 
     let allData = [];
     let filteredData = [];
@@ -323,14 +326,13 @@
     let liqTableRows = [];
     
     // Índices da tabela principal (colunas A-R: 0 a 17)
-    let IDX_FAVORECIDO = 7;   // coluna H
-    let IDX_PROCESSO   = 12;  // coluna M
-    let IDX_SALDO      = 17;  // coluna R
+    let IDX_FAVORECIDO = 7;
+    let IDX_PROCESSO   = 12;
+    let IDX_SALDO      = 17;
     
     // Índices da tabela de liquidações (colunas S-Y: 18 a 24)
-    // S = 18: Favorecido, T = 19: Processo, U = 20: Elemento, V = 21: Subitem, W = 22: Cos01, X = 23: PI, Y = 24: Total
     const LIQ_START = 18;
-    const LIQ_END = 25;  // 7 colunas (S a Y)
+    const LIQ_END = 25;
     
     let allMatches = [];
 
@@ -397,20 +399,32 @@
         document.getElementById('dashboardContent').classList.add('hidden');
 
         try {
-            const resp = await fetch(CSV_URL + '?t=' + Date.now(), { cache: 'no-cache' });
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            // Usando proxy para evitar CORS
+            console.log("Carregando via proxy:", PROXY_URL + encodeURIComponent(CSV_URL));
+            const resp = await fetch(PROXY_URL + encodeURIComponent(CSV_URL) + '&t=' + Date.now());
+            
+            if (!resp.ok) throw new Error(`HTTP ${resp.status} - ${resp.statusText}`);
+            
             const text = await resp.text();
+            console.log("CSV carregado, primeiros 200 caracteres:", text.substring(0, 200));
+            
+            if (!text || text.length < 100) throw new Error("CSV vazio ou muito curto");
+            
             const allRows = parseCSV(text);
+            console.log(`Total de linhas no CSV: ${allRows.length}`);
+            
             if (allRows.length < 2) throw new Error('Planilha sem dados.');
-
+            
             const headerRow = allRows[0];
+            console.log("Cabeçalho (colunas 0-17):", headerRow.slice(0, 18));
+            console.log("Cabeçalho (colunas 18-24 - liquidações):", headerRow.slice(18, 25));
             
             // =========================================================
             // TABELA PRINCIPAL: colunas A-R (índices 0 a 17)
             // =========================================================
             headersMain = headerRow.slice(0, LIQ_START);
             
-            // Opcional: detectar índices pelos nomes (fallback)
+            // Tentar detectar índices pelos nomes das colunas
             const h = headersMain.map(c => String(c).toLowerCase().trim());
             const find = (...terms) => {
                 let i = h.findIndex(c => terms.some(t => c === t.toLowerCase()));
@@ -424,7 +438,7 @@
             if (procIdx >= 0) IDX_PROCESSO = procIdx;
             if (saldoIdx >= 0) IDX_SALDO = saldoIdx;
             
-            console.log('Índices principais:', { IDX_FAVORECIDO, IDX_PROCESSO, IDX_SALDO });
+            console.log('Índices principais detectados:', { IDX_FAVORECIDO, IDX_PROCESSO, IDX_SALDO });
             
             allData = [];
             for (let i = 1; i < allRows.length; i++) {
@@ -436,6 +450,7 @@
                 }
             }
             filteredData = [...allData];
+            console.log(`Linhas na tabela principal: ${allData.length}`);
             
             // =========================================================
             // TABELA DE LIQUIDAÇÕES: colunas S-Y (índices 18 a 24)
@@ -443,10 +458,8 @@
             liqTableRows = [];
             for (let i = 1; i < allRows.length; i++) {
                 const row = allRows[i].slice(LIQ_START, LIQ_END);
-                // Verifica se tem dados na coluna S (favorecido da liquidação)
                 const fav = String(row[0] || '').trim();
                 if (fav && fav !== 'Total' && fav !== '') {
-                    // Só adiciona se tiver processo e valor
                     const proc = String(row[1] || '').trim();
                     const val = parseBRValue(row[6] || '0');
                     if (proc && val > 0) {
@@ -456,10 +469,12 @@
             }
             
             console.log(`Linhas de liquidação extraídas: ${liqTableRows.length}`);
-            console.log('Exemplos:', liqTableRows.slice(0, 3));
+            if (liqTableRows.length > 0) {
+                console.log('Primeira linha de liquidação:', liqTableRows[0]);
+            }
             
             // =========================================================
-            // CRUZAMENTO: criar mapa de liquidações por Favorecido+Processo
+            // CRUZAMENTO: criar mapa de liquidações
             // =========================================================
             const liqMap = {};
             for (const row of liqTableRows) {
@@ -526,11 +541,11 @@
             renderDashboard();
             
         } catch (err) {
-            console.error('Erro:', err);
+            console.error('Erro detalhado:', err);
             document.getElementById('loadingIcon').className = 'text-5xl text-red-500';
             document.getElementById('loadingIcon').innerHTML = '<i class="fas fa-exclamation-circle"></i>';
             document.getElementById('loadingTitle').textContent = 'Erro ao carregar';
-            document.getElementById('loadingSubtitle').textContent = err.message + ' — Tente novamente.';
+            document.getElementById('loadingSubtitle').textContent = err.message + ' — Verifique o console (F12) para mais detalhes.';
         }
         btn.disabled = false; 
         icon.className = 'fas fa-sync-alt';
@@ -608,7 +623,7 @@
                 </tr></thead>
                 <tbody>${tbody}</tbody>
                 <tfoot>${tfootRow}</tfoot>
-            <table>
+            </table>
         `;
     }
 
