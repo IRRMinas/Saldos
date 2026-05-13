@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Consulta de Saldos Diários</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -16,139 +15,112 @@
                     colors: {
                         darkBg: '#080e1a',
                         darkCard: '#0d1626',
-                        darkCard2: '#111e33',
                         darkBorder: '#1e3050',
                         brandBlue: '#3b82f6',
                         brandGreen: '#10b981',
                         brandAmber: '#f59e0b',
-                        brandRed: '#ef4444',
                     }
                 }
             }
         }
     </script>
     <style>
-        * { box-sizing: border-box; }
         body { 
             font-family: 'Outfit', sans-serif; 
             background-color: #080e1a; 
             color: #e2e8f0; 
-            background-image: 
-                radial-gradient(ellipse at 20% 0%, rgba(59,130,246,0.07) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 100%, rgba(6,182,212,0.05) 0%, transparent 60%);
+            background-image: radial-gradient(ellipse at 20% 0%, rgba(59,130,246,0.07) 0%, transparent 60%);
         }
-        h1, h2, h3, .font-display { font-family: 'Syne', sans-serif; }
+        .font-display { font-family: 'Syne', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace !important; }
-
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #080e1a; }
-        ::-webkit-scrollbar-thumb { background: #1e3050; border-radius: 4px; }
-
-        .result-card { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: pointer; }
-        .result-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(59,130,246,0.3); }
-
+        
         #liquidacaoPanel {
             position: relative;
             border-radius: 20px;
             border: 1px solid rgba(245,158,11,0.25);
             background: linear-gradient(135deg, #0d1626 0%, #0f1e38 50%, #0d1626 100%);
         }
-        #liquidacaoPanel::before {
-            content: ''; position: absolute; top: -1px; left: -1px; right: -1px; bottom: -1px;
-            border-radius: 20px; z-index: 0; padding: 1px;
-            background: linear-gradient(135deg, rgba(245,158,11,0.4), rgba(239,68,68,0.2), rgba(6,182,212,0.2), rgba(245,158,11,0.4));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: destination-out; mask-composite: exclude;
-        }
-        #liquidacaoPanel > * { position: relative; z-index: 1; }
 
         .liq-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .liq-table thead tr th {
+        .liq-table thead th {
             padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700;
             text-transform: uppercase; color: #475569; background: rgba(17,30,51,0.8);
             border-bottom: 1px solid #1e3050;
         }
         .liq-table tbody td { padding: 12px 12px; border-bottom: 1px solid rgba(30,48,80,0.4); }
-        .liq-table tbody tr:hover { background: rgba(245,158,11,0.04); }
-
         .value-chip { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 5px; display: inline-block; }
         .chip-before { background: rgba(100,116,139,0.12); color: #94a3b8; }
         .chip-liq    { background: rgba(239,68,68,0.10);   color: #f87171; }
         .chip-after  { background: rgba(16,185,129,0.10);  color: #34d399; }
-
+        
         .mini-bar-track { height: 4px; border-radius: 3px; background: rgba(255,255,255,0.05); width: 60px; overflow: hidden; display: inline-block; vertical-align: middle; }
         .mini-bar-fill { height: 100%; border-radius: 3px; }
-        
-        .pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pulse-amber 1.8s infinite; }
-        @keyframes pulse-amber { 0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.6); } 70% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); } }
+        .pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pulse 1.8s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.6); } 70% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); } }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
-    <header style="background: rgba(13,22,38,0.95); border-bottom: 1px solid #1e3050; backdrop-filter: blur(12px);" class="sticky top-0 z-10">
+    <header class="sticky top-0 z-10 bg-darkBg/95 border-b border-darkBorder backdrop-blur-md">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <div style="background: linear-gradient(135deg, #1d4ed8, #0891b2);" class="text-white p-2.5 rounded-xl"><i class="fas fa-database text-xl"></i></div>
+                <div class="bg-gradient-to-br from-blue-600 to-cyan-600 p-2.5 rounded-xl shadow-lg shadow-blue-900/20">
+                    <i class="fas fa-database text-xl text-white"></i>
+                </div>
                 <div>
-                    <h1 class="text-xl font-display font-bold text-white">Consulta Diária de Saldos</h1>
-                    <p class="text-xs font-mono text-slate-500">Conexão Direta: CSV Google Sheets</p>
+                    <h1 class="text-xl font-display font-bold text-white uppercase tracking-tight">Dashboard de Saldos</h1>
+                    <p class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Sincronização Direta CSV</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <div id="statusBadge" class="hidden items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium" style="background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2);">
-                    <i class="fas fa-circle text-[10px] animate-pulse"></i> <span id="lastUpdateText">ao vivo</span>
-                </div>
-                <button onclick="loadData()" class="text-white px-4 py-2 rounded-xl font-semibold text-sm" style="background: linear-gradient(135deg, #2563eb, #0891b2);">
-                    <i class="fas fa-sync-alt"></i> Atualizar
-                </button>
-            </div>
+            <button onclick="loadData()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl font-semibold text-sm transition-all flex items-center gap-2">
+                <i class="fas fa-sync-alt" id="refreshIcon"></i> ATUALIZAR
+            </button>
         </div>
     </header>
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
-        <div id="uploadSection" class="rounded-2xl p-10 mb-8 text-center" style="background: #0d1626; border: 1px solid #1e3050;">
-            <div id="loadingIcon" class="text-5xl animate-spin text-blue-500 mb-4"><i class="fas fa-circle-notch"></i></div>
-            <h2 class="text-xl font-display font-bold text-white">Sincronizando com a Planilha...</h2>
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full space-y-8">
+        
+        <div id="loadingScreen" class="rounded-2xl p-20 text-center bg-darkCard border border-darkBorder">
+            <i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i>
+            <h2 class="text-lg font-display text-white">A carregar dados da folha...</h2>
         </div>
 
         <div id="dashboardContent" class="hidden space-y-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="rounded-2xl p-6 bg-[#0d1626] border border-[#1e3050]">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Saldo Total</p>
-                    <h3 id="kpiTotalSaldo" class="text-2xl font-display font-bold text-white tracking-tight">R$ 0,00</h3>
+                <div class="bg-darkCard border border-darkBorder p-6 rounded-2xl">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Saldo Total Geral</p>
+                    <h3 id="kpiSaldo" class="text-2xl font-display font-bold text-white tracking-tight">R$ 0,00</h3>
                 </div>
-                <div class="rounded-2xl p-6 bg-[#0d1626] border border-[#1e3050]">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Processos</p>
-                    <h3 id="kpiTotalProcessos" class="text-2xl font-display font-bold text-white tracking-tight">0</h3>
+                <div class="bg-darkCard border border-darkBorder p-6 rounded-2xl">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Processos Ativos</p>
+                    <h3 id="kpiProc" class="text-2xl font-display font-bold text-white tracking-tight">0</h3>
                 </div>
-                <div class="rounded-2xl p-6 bg-[#0d1626] border border-[#1e3050]">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Favorecidos</p>
-                    <h3 id="kpiTotalFavorecidos" class="text-2xl font-display font-bold text-white tracking-tight">0</h3>
+                <div class="bg-darkCard border border-darkBorder p-6 rounded-2xl">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Favorecidos</p>
+                    <h3 id="kpiFav" class="text-2xl font-display font-bold text-white tracking-tight">0</h3>
                 </div>
             </div>
 
-            <div id="liquidacaoPanel" class="hidden p-5">
-                <div class="flex items-center gap-3 mb-4">
-                    <span class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 text-amber-500 font-bold text-[11px] uppercase px-3 py-1 rounded-full">
-                        <span class="pulse-dot"></span> Liquidações do Dia
+            <div id="liquidacaoPanel" class="hidden p-6">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <span class="pulse-dot"></span> Liquidações Detectadas no Dia
                     </span>
-                    <span id="liqCountBadge" class="text-xs px-2 py-1 rounded-md bg-red-500/10 text-red-400 font-mono">0</span>
+                    <span id="liqBadge" class="text-xs font-mono font-bold bg-red-500/10 text-red-400 px-2 py-1 rounded">0</span>
                 </div>
-                <div id="liqCardsContainer" class="overflow-x-auto rounded-xl"></div>
+                <div id="liqTableWrap" class="liq-table-wrap">
+                    </div>
             </div>
 
-            <div class="rounded-2xl p-6 bg-[#0d1626] border border-[#1e3050]">
+            <div class="bg-darkCard border border-darkBorder p-6 rounded-2xl">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="searchGlobal" placeholder="🔍 Busca por nome ou processo..." class="w-full px-4 py-2.5 rounded-xl bg-[#111e33] border border-[#1e3050] text-white text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                    <input type="text" id="searchProcesso" placeholder="📄 Nº Processo..." class="w-full px-4 py-2.5 rounded-xl bg-[#111e33] border border-[#1e3050] text-white text-sm outline-none">
-                    <input type="text" id="searchFavorecido" placeholder="👥 Favorecido..." class="w-full px-4 py-2.5 rounded-xl bg-[#111e33] border border-[#1e3050] text-white text-sm outline-none">
+                    <input type="text" id="filterGlobal" placeholder="🔍 Pesquisa rápida..." class="bg-[#111e33] border border-darkBorder rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="filterProc" placeholder="📄 Nº Processo..." class="bg-[#111e33] border border-darkBorder rounded-xl px-4 py-2.5 text-sm outline-none">
+                    <input type="text" id="filterFav" placeholder="👥 Favorecido..." class="bg-[#111e33] border border-darkBorder rounded-xl px-4 py-2.5 text-sm outline-none">
                 </div>
             </div>
 
-            <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
-            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-slate-500">
-                <i class="fas fa-box-open text-5xl mb-4"></i> <p>Nenhum resultado encontrado.</p>
-            </div>
+            <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         </div>
     </main>
 
@@ -157,27 +129,31 @@
 
         let allData = [];
         let filteredData = [];
-        let headers = [];
-        window.allMatches = [];
+        window.allLiq = [];
 
-        // Índices baseados na sua planilha (A=0, H=7, M=12, R=17, T=19, Z=25)
-        const IDX_FAV = 7, IDX_PROC = 12, IDX_SALDO = 17;
-        const L_FAV = 19, L_PROC = 20, L_ELEM = 21, L_SUB = 22, L_TOTAL = 25;
+        // Mapeamento exato da sua folha (Base 0)
+        const H_FAV = 7, M_PROC = 12, R_SALDO = 17; // Main
+        const T_FAV = 19, U_PROC = 20, V_ELEM = 21, W_SUB = 22, Z_TOTAL = 25; // Liq
 
+        // Parser Robusto para CSV (Lida com vírgulas dentro de aspas)
         function parseCSV(text) {
-            return text.split(/\r?\n/).map(line => {
-                const res = []; let cur = '', q = false;
+            const lines = text.split(/\r?\n/);
+            return lines.map(line => {
+                const row = [];
+                let cell = '', inQuotes = false;
                 for (let i = 0; i < line.length; i++) {
-                    if (line[i] === '"') q = !q;
-                    else if (line[i] === ',' && !q) { res.push(cur.trim()); cur = ''; }
-                    else cur += line[i];
+                    const char = line[i];
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === ',' && !inQuotes) {
+                        row.push(cell.trim()); cell = '';
+                    } else cell += char;
                 }
-                res.push(cur.trim());
-                return res;
-            }).filter(r => r.length > 5);
+                row.push(cell.trim());
+                return row;
+            }).filter(row => row.length > 5);
         }
 
-        function parseBR(v) {
+        function parseNum(v) {
             v = String(v || '').replace(/R\$\s*/gi, '').trim();
             if (!v || v === '-' || v === '—') return 0;
             if (v.includes(',') && v.includes('.')) v = v.replace(/\./g, '').replace(',', '.');
@@ -188,81 +164,90 @@
         function fmt(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v); }
 
         async function loadData() {
-            document.getElementById('uploadSection').style.display = 'block';
-            document.getElementById('dashboardContent').classList.add('hidden');
+            const icon = document.getElementById('refreshIcon');
+            icon.classList.add('animate-spin');
+            
             try {
-                const resp = await fetch(CSV_URL + '&t=' + Date.now());
-                const rows = parseCSV(await resp.text());
-                headers = rows[0];
-                allData = rows.slice(1).filter(r => r[IDX_PROC] && r[IDX_PROC] !== 'Total');
+                const resp = await fetch(CSV_URL + '&cache=' + Date.now());
+                const data = parseCSV(await resp.text());
+                
+                // Dados Principais (Ignora cabeçalho e linhas de Total)
+                allData = data.slice(1).filter(r => r[M_PROC] && r[M_PROC] !== 'Total' && r[H_FAV] !== 'Total');
 
-                window.allMatches = allData.filter(r => r[L_TOTAL] && parseBR(r[L_TOTAL]) > 0).map(r => {
-                    const sA = parseBR(r[IDX_SALDO]), sL = parseBR(r[L_TOTAL]);
-                    return { fav: r[L_FAV], proc: r[L_PROC], elem: r[L_ELEM], sub: r[L_SUB], liq: sL, sAnt: sA+sL, sAtu: sA, pct: (sL/(sA+sL+0.01))*100 };
+                // Mapeamento de Liquidações (Coluna Z > 0)
+                window.allLiq = allData.filter(r => parseNum(r[Z_TOTAL]) > 0).map(r => {
+                    const sa = parseNum(r[R_SALDO]), liq = parseNum(r[Z_TOTAL]);
+                    return { fav: r[T_FAV], proc: r[U_PROC], elem: r[V_ELEM], sub: r[W_SUB], val: liq, ant: sa + liq, atu: sa, pct: (liq/(sa+liq+0.01))*100 };
                 });
 
                 applyFilters();
-                document.getElementById('uploadSection').style.display = 'none';
+                document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('dashboardContent').classList.remove('hidden');
-                document.getElementById('statusBadge').classList.replace('hidden', 'flex');
-                document.getElementById('lastUpdateText').textContent = new Date().toLocaleTimeString('pt-BR');
-            } catch (e) { alert("Erro ao carregar dados."); }
+            } catch (e) { alert("Erro ao carregar folha de cálculo."); }
+            icon.classList.remove('animate-spin');
         }
 
         function applyFilters() {
-            const g = document.getElementById('searchGlobal').value.toLowerCase().trim();
-            const p = document.getElementById('searchProcesso').value.toLowerCase().trim();
-            const f = document.getElementById('searchFavorecido').value.toLowerCase().trim();
+            const g = document.getElementById('filterGlobal').value.toLowerCase().trim();
+            const p = document.getElementById('filterProc').value.toLowerCase().trim();
+            const f = document.getElementById('filterFav').value.toLowerCase().trim();
 
             filteredData = allData.filter(r => {
-                const proc = String(r[IDX_PROC]).toLowerCase();
-                const fav = String(r[IDX_FAV]).toLowerCase();
-                // A busca global agora foca apenas em NOME ou PROCESSO para evitar lixo
-                const areaBusca = fav + " " + proc;
-                return proc.includes(p) && fav.includes(f) && areaBusca.includes(g);
+                const proc = String(r[M_PROC]).toLowerCase();
+                const fav = String(r[H_FAV]).toLowerCase();
+                // Filtro "Cemig" corrigido: apenas nome ou processo
+                const target = fav + " " + proc;
+                return proc.includes(p) && fav.includes(f) && target.includes(g);
             });
 
-            const liqFiltro = window.allMatches.filter(m => (m.fav+m.proc).toLowerCase().includes(g) && m.fav.toLowerCase().includes(f) && m.proc.toLowerCase().includes(p));
-            renderLiquidacaoPanel(liqFiltro);
-            renderDashboard();
+            const liqFiltro = window.allLiq.filter(m => (m.fav + m.proc).toLowerCase().includes(g) && m.fav.toLowerCase().includes(f) && m.proc.toLowerCase().includes(p));
+            
+            renderLiq(liqFiltro);
+            renderGrid();
         }
 
-        function renderLiquidacaoPanel(m) {
+        function renderLiq(m) {
             const panel = document.getElementById('liquidacaoPanel');
             if (m.length === 0) { panel.classList.add('hidden'); return; }
             panel.classList.remove('hidden');
-            document.getElementById('liqCountBadge').textContent = m.length;
-            let h = `<table class="liq-table"><thead><tr><th>Favorecido</th><th>Elemento · Processo</th><th class="text-right">Anterior</th><th class="text-right">Liquidado</th><th class="text-right">Atual</th><th class="text-right">Consumo</th></tr></thead><tbody>`;
+            document.getElementById('liqBadge').textContent = m.length;
+            
+            let h = `<table class="liq-table"><thead><tr><th>Favorecido</th><th>Elemento / Processo</th><th class="text-right">Anterior</th><th class="text-right">Liquidado</th><th class="text-right">Atual</th><th class="text-right">Consumo</th></tr></thead><tbody>`;
             m.forEach(i => {
-                const color = i.pct > 80 ? '#ef4444' : '#10b981';
-                h += `<tr><td><p class="text-sm font-semibold text-white">${i.fav}</p></td>
-                <td><span class="text-[11px] font-mono px-2 py-1 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">${i.elem}/${i.sub} · ${i.proc}</span></td>
-                <td class="text-right"><span class="value-chip chip-before">${fmt(i.sAnt)}</span></td>
-                <td class="text-right"><span class="value-chip chip-liq">− ${fmt(i.liq)}</span></td>
-                <td class="text-right"><span class="value-chip chip-after">${fmt(i.sAtu)}</span></td>
-                <td class="text-right"><span class="text-[11px] font-mono mr-2">${i.pct.toFixed(1)}%</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${i.pct}%; background:${color}"></div></div></td></tr>`;
+                const color = i.pct > 85 ? '#ef4444' : '#10b981';
+                h += `<tr>
+                    <td><p class="text-sm font-semibold text-white">${i.fav}</p></td>
+                    <td><span class="text-[11px] font-mono px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">${i.elem}/${i.sub} · ${i.proc}</span></td>
+                    <td class="text-right"><span class="value-chip chip-before">${fmt(i.ant)}</span></td>
+                    <td class="text-right"><span class="value-chip chip-liq">− ${fmt(i.val)}</span></td>
+                    <td class="text-right"><span class="value-chip chip-after">${fmt(i.atu)}</span></td>
+                    <td class="text-right"><span class="text-[11px] font-mono mr-2">${i.pct.toFixed(1)}%</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${i.pct}%; background:${color}"></div></div></td>
+                </tr>`;
             });
-            document.getElementById('liqCardsContainer').innerHTML = h + `</tbody></table>`;
+            document.getElementById('liqTableWrap').innerHTML = h + `</tbody></table>`;
         }
 
-        function renderDashboard() {
-            const container = document.getElementById('resultsContainer');
-            container.innerHTML = '';
+        function renderGrid() {
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = '';
             let total = 0;
-            if (filteredData.length === 0) { document.getElementById('emptyState').classList.remove('hidden'); return; }
-            document.getElementById('emptyState').classList.add('hidden');
             filteredData.forEach(r => {
-                const s = parseBR(r[IDX_SALDO]); total += s;
+                const s = parseNum(r[R_SALDO]); total += s;
                 const card = document.createElement('div');
-                card.className = 'result-card rounded-2xl p-5 bg-[#0d1626] border border-[#1e3050]';
-                card.innerHTML = `<p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Processo</p><h4 class="text-white font-display font-bold mb-3">${r[IDX_PROC]}</h4>
-                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Favorecido</p><p class="text-sm text-slate-400 line-clamp-2 mb-4">${r[IDX_FAV]}</p>
-                <div class="pt-4 border-t border-slate-800"><p class="text-lg font-mono font-bold ${s >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${fmt(s)}</p></div>`;
-                container.appendChild(card);
+                card.className = 'bg-darkCard border border-darkBorder p-5 rounded-2xl hover:translate-y-[-4px] transition-all cursor-pointer';
+                card.innerHTML = `
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Processo</p>
+                    <h4 class="text-white font-display font-bold mb-3">${r[M_PROC]}</h4>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Favorecido</p>
+                    <p class="text-sm text-slate-400 line-clamp-1 mb-4">${r[H_FAV]}</p>
+                    <div class="pt-4 border-t border-darkBorder">
+                        <p class="text-lg font-mono font-bold ${s >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${fmt(s)}</p>
+                    </div>`;
+                grid.appendChild(card);
             });
-            document.getElementById('kpiTotalSaldo').textContent = fmt(total);
-            document.getElementById('kpiTotalProcessos').textContent = filteredData.length;
-            document.getElementById('kpiTotalFavorecidos').textContent = new Set(filteredData.map(r => r[IDX_FAV])).size;
+            document.getElementById('kpiSaldo').textContent = fmt(total);
+            document.getElementById('kpiProc').textContent = filteredData.length;
+            document.getElementById('kpiFav').textContent = new Set(filteredData.map(r => r[H_FAV])).size;
         }
 
         document.querySelectorAll('input').forEach(i => i.addEventListener('input', applyFilters));
