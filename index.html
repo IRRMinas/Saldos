@@ -82,7 +82,7 @@
         
         <div id="loadingScreen" class="rounded-2xl p-20 text-center bg-darkCard border border-darkBorder">
             <i class="fas fa-circle-notch animate-spin text-4xl text-blue-500 mb-4"></i>
-            <h2 class="text-lg font-display text-white">A carregar dados da folha...</h2>
+            <h2 class="text-lg font-display text-white">A carregar dados da planilha...</h2>
         </div>
 
         <div id="dashboardContent" class="hidden space-y-8">
@@ -114,9 +114,9 @@
 
             <div class="bg-darkCard border border-darkBorder p-6 rounded-2xl">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input type="text" id="filterGlobal" placeholder="🔍 Pesquisa rápida..." class="bg-[#111e33] border border-darkBorder rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                    <input type="text" id="filterProc" placeholder="📄 Nº Processo..." class="bg-[#111e33] border border-darkBorder rounded-xl px-4 py-2.5 text-sm outline-none">
-                    <input type="text" id="filterFav" placeholder="👥 Favorecido..." class="bg-[#111e33] border border-darkBorder rounded-xl px-4 py-2.5 text-sm outline-none">
+                    <input type="text" id="filterGlobal" placeholder="🔍 Pesquisa por processo ou nome..." class="bg-[#111e33] border border-darkBorder rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                    <input type="text" id="filterProc" placeholder="📄 Nº Processo..." class="bg-[#111e33] border border-darkBorder rounded-xl px-4 py-2.5 text-sm outline-none text-white">
+                    <input type="text" id="filterFav" placeholder="👥 Favorecido..." class="bg-[#111e33] border border-darkBorder rounded-xl px-4 py-2.5 text-sm outline-none text-white">
                 </div>
             </div>
 
@@ -131,11 +131,10 @@
         let filteredData = [];
         window.allLiq = [];
 
-        // Variáveis de colunas dinâmicas
         let IDX_FAV=7, IDX_PROC=12, IDX_SALDO=17;
         let L_FAV=19, L_PROC=20, L_ELEM=21, L_SUB=22, L_TOTAL=25;
 
-        // Novo Leitor de CSV Avançado (Ignora "Enters" dentro das células)
+        // Leitor de CSV que respeita quebras de linha e aspas
         function parseCSV(text) {
             const result = [];
             let row = [];
@@ -152,8 +151,8 @@
                 else if (char === ',' && !inQuotes) {
                     row.push(cell.trim()); cell = '';
                 } 
-                else if ((char === '\\n' || char === '\\r' || char === '\n' || char === '\r') && !inQuotes) {
-                    if ((char === '\r' || char === '\\r') && (nextChar === '\n' || nextChar === '\\n')) i++;
+                else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    if (char === '\r' && nextChar === '\n') i++;
                     row.push(cell.trim());
                     if (row.length > 5) result.push(row);
                     row = []; cell = '';
@@ -167,6 +166,7 @@
             return result;
         }
 
+        // Descobre dinamicamente a posição das colunas
         function detectIndexes(h) {
             const lowerH = h.map(c => String(c).toLowerCase().trim());
             IDX_FAV = lowerH.indexOf('ne ccor - favorecido'); if(IDX_FAV < 0) IDX_FAV = 7;
@@ -177,7 +177,7 @@
             L_PROC = lowerH.lastIndexOf('ne ccor - núm. processo'); if(L_PROC <= IDX_PROC) L_PROC = lowerH.lastIndexOf('ne ccor - num. processo'); if(L_PROC <= IDX_PROC) L_PROC = 20;
             L_ELEM = lowerH.lastIndexOf('elemento despesa'); if(L_ELEM <= 0) L_ELEM = 21;
             L_SUB = lowerH.lastIndexOf('subitem'); if(L_SUB <= 0) L_SUB = 22;
-            L_TOTAL = lowerH.findIndex(c => c.includes('liquidacoes totais') || c.includes('liquidações totais')); if(L_TOTAL < 0) L_TOTAL = 25;
+            L_TOTAL = lowerH.findIndex(c => c.includes('liquidacoes totais') || c.includes('liquidações totais') || c.includes('liquidacao total')); if(L_TOTAL < 0) L_TOTAL = 25;
         }
 
         function parseNum(v) {
@@ -199,20 +199,42 @@
                 const rawText = await resp.text();
                 const data = parseCSV(rawText);
                 
+                if (data.length < 2) throw new Error("A planilha retornou vazia.");
+
                 detectIndexes(data[0]);
 
-                allData = data.slice(1).filter(r => r[IDX_PROC] && r[IDX_PROC] !== 'Total' && r[IDX_FAV] !== 'Total');
+                // TABELA DA ESQUERDA: Extrai todos os processos ativos
+                allData = data.slice(1).filter(r => r[IDX_PROC] && r[IDX_PROC] !== 'Total' && r[IDX_FAV] && r[IDX_FAV] !== 'Total');
 
-                window.allLiq = allData.filter(r => r[L_TOTAL] && parseNum(r[L_TOTAL]) > 0).map(r => {
-                    const sa = parseNum(r[IDX_SALDO]);
-                    const liq = parseNum(r[L_TOTAL]);
-                    return { fav: r[L_FAV], proc: r[L_PROC], elem: r[L_ELEM], sub: r[L_SUB], val: liq, ant: sa + liq, atu: sa, pct: (liq/(sa+liq+0.01))*100 };
+                // TABELA DA DIREITA: Extrai as liquidações lendo as colunas independentemente da esquerda
+                const rawLiq = data.slice(1).filter(r => r[L_PROC] && r[L_PROC] !== 'Total' && r[L_TOTAL] && parseNum(r[L_TOTAL]) > 0);
+
+                // CRUZAMENTO: Cruza o Favorecido/Processo da Direita com a Esquerda para achar o Saldo
+                window.allLiq = rawLiq.map(r => {
+                    const fav = String(r[L_FAV]).trim();
+                    const proc = String(r[L_PROC]).trim();
+                    const liqVal = parseNum(r[L_TOTAL]);
+                    
+                    // Acha a linha na tabela principal para pegar o Saldo Atual
+                    const match = allData.find(mainRow => String(mainRow[IDX_PROC]).trim() === proc && String(mainRow[IDX_FAV]).trim() === fav);
+                    const saldoAtu = match ? parseNum(match[IDX_SALDO]) : 0;
+                    
+                    return { 
+                        fav: fav, 
+                        proc: proc, 
+                        elem: r[L_ELEM], 
+                        sub: r[L_SUB], 
+                        val: liqVal, 
+                        ant: saldoAtu + liqVal, 
+                        atu: saldoAtu, 
+                        pct: (liqVal / (saldoAtu + liqVal + 0.0001)) * 100 
+                    };
                 });
 
                 applyFilters();
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('dashboardContent').classList.remove('hidden');
-            } catch (e) { alert("Erro ao carregar os dados. Detalhe: " + e.message); console.error(e); }
+            } catch (e) { alert("Erro ao carregar dados: " + e.message); console.error(e); }
             icon.classList.remove('animate-spin');
         }
 
@@ -242,14 +264,15 @@
             
             let h = `<table class="liq-table"><thead><tr><th>Favorecido</th><th>Elemento / Processo</th><th class="text-right">Anterior</th><th class="text-right">Liquidado</th><th class="text-right">Atual</th><th class="text-right">Consumo</th></tr></thead><tbody>`;
             m.forEach(i => {
-                const color = i.pct > 85 ? '#ef4444' : '#10b981';
+                const pctFmt = Math.min(i.pct, 100);
+                const color = pctFmt > 85 ? '#ef4444' : '#10b981';
                 h += `<tr>
                     <td><p class="text-sm font-semibold text-white">${i.fav}</p></td>
                     <td><span class="text-[11px] font-mono px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">${i.elem}/${i.sub} · ${i.proc}</span></td>
                     <td class="text-right"><span class="value-chip chip-before">${fmt(i.ant)}</span></td>
                     <td class="text-right"><span class="value-chip chip-liq">− ${fmt(i.val)}</span></td>
                     <td class="text-right"><span class="value-chip chip-after">${fmt(i.atu)}</span></td>
-                    <td class="text-right"><span class="text-[11px] font-mono mr-2">${i.pct.toFixed(1)}%</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${i.pct}%; background:${color}"></div></div></td>
+                    <td class="text-right flex items-center justify-end gap-2"><span class="text-[11px] font-mono">${pctFmt.toFixed(1)}%</span><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${pctFmt}%; background:${color}"></div></div></td>
                 </tr>`;
             });
             document.getElementById('liqTableWrap').innerHTML = h + `</tbody></table>`;
