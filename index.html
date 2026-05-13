@@ -201,6 +201,7 @@
 
     <div id="dashboardContent" class="hidden space-y-8">
 
+        <!-- KPI CARDS -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="kpi-card rounded-2xl p-6 flex items-center gap-5 relative overflow-hidden" style="background: #0d1626; border: 1px solid #1e3050;">
                 <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10" style="background: #3b82f6; transform: translate(20%, -20%);"></div>
@@ -234,6 +235,7 @@
             </div>
         </div>
 
+        <!-- LIQUIDACOES PANEL -->
         <div id="liquidacaoPanel" class="hidden p-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div class="flex items-center gap-3">
@@ -247,6 +249,7 @@
             <div id="liqCardsContainer" class="liq-table-wrap"></div>
         </div>
 
+        <!-- FILTERS -->
         <div class="rounded-2xl p-6" style="background: #0d1626; border: 1px solid #1e3050;">
             <h3 class="text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2" style="color: #475569;">
                 <i class="fas fa-sliders-h" style="color:#3b82f6;"></i> Filtros de Pesquisa
@@ -267,6 +270,7 @@
             </div>
         </div>
 
+        <!-- RESULTS GRID -->
         <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16" style="color: #334155;">
             <i class="fas fa-box-open text-5xl mb-4" style="color:#1e3050;"></i>
@@ -276,6 +280,7 @@
     </div>
 </main>
 
+<!-- MODAL -->
 <div id="detailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
     <div class="modal-content w-full max-w-3xl rounded-2xl flex flex-col max-h-[90vh]" style="background: #0d1626; border: 1px solid #1e3050; box-shadow: 0 40px 80px -10px rgba(0,0,0,0.8);">
         <div class="px-6 py-4 flex justify-between items-center rounded-t-2xl" style="border-bottom: 1px solid #1e3050; background: rgba(17,30,51,0.5);">
@@ -313,29 +318,30 @@
 </div>
 
 <script>
-    // URL pública do CSV (a mesma que funcionava no primeiro código)
+    // ─────────────────────────────────────────────────────────────
+    // URL pública do CSV (a mesma que funciona no primeiro código)
+    // ─────────────────────────────────────────────────────────────
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZQ4K9szuj6x6mVT-xzyk829q1THHXBhugH2xUK5tkAC36tDjTsLPNhDKmdMS29xhZwakRVZotrKwL/pub?gid=0&single=true&output=csv";
 
     let allData = [];          // tabela principal (colunas A-R)
     let filteredData = [];
     let headersMain = [];
     let liqTableRows = [];     // tabela de liquidações (colunas T-Z)
-    let liqHeaders = [];
-
+    
     // Índices das colunas principais (A-R)
     let IDX_FAVORECIDO = -1;
     let IDX_PROCESSO   = -1;
     let IDX_SALDO      = -1;
-
+    
     // Índices das colunas de liquidação (T-Z)
-    let IDX_LIQ_FAV    = -1;
-    let IDX_LIQ_PROC   = -1;
-    let IDX_LIQ_ELEM   = -1;
-    let IDX_LIQ_SUBIT  = -1;
-    let IDX_LIQ_COS01  = -1;
-    let IDX_LIQ_PI     = -1;
-    let IDX_LIQ_TOTAL  = -1;
-
+    let IDX_LIQ_FAV    = -1;   // coluna T (índice 19)
+    let IDX_LIQ_PROC   = -1;   // coluna U (índice 20)
+    let IDX_LIQ_ELEM   = -1;   // coluna V (índice 21)
+    let IDX_LIQ_SUBIT  = -1;   // coluna W (índice 22)
+    let IDX_LIQ_COS01  = -1;   // coluna X (índice 23)
+    let IDX_LIQ_PI     = -1;   // coluna Y (índice 24)
+    let IDX_LIQ_TOTAL  = -1;   // coluna Z (índice 25)
+    
     let allMatches = [];
 
     const modal = document.getElementById('detailsModal');
@@ -384,7 +390,7 @@
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(num) ? 0 : num);
     }
 
-    // Detecta índices na tabela principal (A-R)
+    // Detecta índices na tabela principal (A-R) - colunas 0 a 17
     function detectMainIndexes(headerRow) {
         const h = headerRow.map(c => String(c).toLowerCase().trim());
         const find = (...terms) => {
@@ -398,48 +404,45 @@
         console.log('Índices principais:', { IDX_FAVORECIDO, IDX_PROCESSO, IDX_SALDO });
     }
 
-    // Detecta índices na tabela de liquidações (T-Z) - considera que os headers estão na mesma linha 0
+    // Detecta índices na tabela de liquidações (T-Z)
+    // IMPORTANTE: As colunas T-Z começam no índice 19 (0-based)
     function detectLiqIndexes(headerRow) {
-        // As colunas T-Z correspondem aos índices 19 a 25 (0-based)
-        const h = headerRow.map(c => String(c || '').toLowerCase().trim());
-        const find = (startIdx, ...terms) => {
-            for (let i = startIdx; i < h.length; i++) {
-                if (terms.some(t => h[i] === t.toLowerCase() || h[i].includes(t.toLowerCase()))) return i;
-            }
-            return -1;
-        };
-        IDX_LIQ_FAV    = find(19, 'ne ccor - favorecido', 'favorecido');
-        IDX_LIQ_PROC   = find(19, 'ne ccor - núm. processo', 'ne ccor - num. processo', 'processo');
-        IDX_LIQ_ELEM   = find(19, 'elemento despesa', 'elemento');
-        IDX_LIQ_SUBIT  = find(19, 'subitem');
-        IDX_LIQ_COS01  = find(19, 'cos01', 'cos 01', 'descrição');
-        IDX_LIQ_PI     = find(19, 'pi');
-        IDX_LIQ_TOTAL  = find(19, 'liquidacoes totais', 'liquidações totais', 'total');
-        console.log('Índices liquidações:', { IDX_LIQ_FAV, IDX_LIQ_PROC, IDX_LIQ_ELEM, IDX_LIQ_SUBIT, IDX_LIQ_COS01, IDX_LIQ_PI, IDX_LIQ_TOTAL });
+        // Mapeamento esperado: T(19)=Favorecido, U(20)=Processo, V(21)=Elemento, W(22)=Subitem, X(23)=Cos01, Y(24)=PI, Z(25)=Total
+        IDX_LIQ_FAV    = 19;
+        IDX_LIQ_PROC   = 20;
+        IDX_LIQ_ELEM   = 21;
+        IDX_LIQ_SUBIT  = 22;
+        IDX_LIQ_COS01  = 23;
+        IDX_LIQ_PI     = 24;
+        IDX_LIQ_TOTAL  = 25;
+        
+        // Verifica se os headers estão nos lugares esperados (apenas para log)
+        console.log('Headers T-Z:', headerRow.slice(19, 26));
+        console.log('Índices liquidações (fixos):', { IDX_LIQ_FAV, IDX_LIQ_PROC, IDX_LIQ_ELEM, IDX_LIQ_SUBIT, IDX_LIQ_COS01, IDX_LIQ_PI, IDX_LIQ_TOTAL });
     }
 
-    // Constrói o mapa de liquidações a partir da tabela T-Z
+    // Constrói o mapa de liquidações a partir das linhas da tabela T-Z
     function buildLiquidationMap(liqRows) {
         const map = {};
-        liqRows.forEach(row => {
-            const fav  = String(row[IDX_LIQ_FAV] || '').trim();
-            const proc = String(row[IDX_LIQ_PROC] || '').trim();
-            if (!fav || !proc || fav === 'Total' || proc === 'Total' || fav === 'undefined') return;
+        for (const row of liqRows) {
+            const fav  = String(row[0] || '').trim();      // coluna T é o índice 0 dentro da tabela T-Z
+            const proc = String(row[1] || '').trim();      // coluna U é o índice 1 dentro da tabela T-Z
+            if (!fav || !proc || fav === 'Total' || proc === 'Total' || fav === 'undefined') continue;
             const key = fav + '|||' + proc;
             if (!map[key]) {
                 map[key] = {
                     favorecido: fav,
                     processo: proc,
                     liqTotal: 0,
-                    elemDespesa: IDX_LIQ_ELEM  >= 0 ? (row[IDX_LIQ_ELEM]  || '') : '',
-                    subitem:     IDX_LIQ_SUBIT >= 0 ? (row[IDX_LIQ_SUBIT] || '') : '',
-                    cos01:       IDX_LIQ_COS01 >= 0 ? (row[IDX_LIQ_COS01] || '') : '',
-                    pi:          IDX_LIQ_PI    >= 0 ? (row[IDX_LIQ_PI]    || '') : '',
+                    elemDespesa: row[2] || '',   // coluna V
+                    subitem:     row[3] || '',   // coluna W
+                    cos01:       row[4] || '',   // coluna X
+                    pi:          row[5] || '',   // coluna Y
                 };
             }
-            const val = IDX_LIQ_TOTAL >= 0 ? parseBRValue(row[IDX_LIQ_TOTAL]) : 0;
+            const val = parseBRValue(row[6] || '0'); // coluna Z
             map[key].liqTotal += val;
-        });
+        }
         return map;
     }
 
@@ -447,29 +450,31 @@
     function findMatches(mainRows, liqMap) {
         const seen = new Set();
         const results = [];
-        mainRows.forEach(row => {
+        for (const row of mainRows) {
             const fav  = String(row[IDX_FAVORECIDO] || '').trim();
             const proc = String(row[IDX_PROCESSO]   || '').trim();
-            if (!fav || !proc || proc === 'Total') return;
+            if (!fav || !proc || proc === 'Total') continue;
             const key = fav + '|||' + proc;
             if (liqMap[key] && !seen.has(key)) {
                 seen.add(key);
                 const liqInfo = liqMap[key];
                 const saldoAtual = parseBRValue(row[IDX_SALDO]);
+                const saldoAntes = saldoAtual + liqInfo.liqTotal;
+                const pct = saldoAntes > 0 ? (liqInfo.liqTotal / saldoAntes) * 100 : 0;
                 results.push({
                     favorecido:  fav,
                     processo:    proc,
-                    saldoAntes:  saldoAtual + liqInfo.liqTotal,
+                    saldoAntes:  saldoAntes,
                     liquidado:   liqInfo.liqTotal,
                     saldoDepois: saldoAtual,
-                    pct:         (liqInfo.liqTotal / (saldoAtual + liqInfo.liqTotal + 0.001)) * 100,
+                    pct:         pct,
                     elemDespesa: liqInfo.elemDespesa,
                     subitem:     liqInfo.subitem,
                     cos01:       liqInfo.cos01,
                     pi:          liqInfo.pi,
                 });
             }
-        });
+        }
         return results;
     }
 
@@ -549,12 +554,21 @@
         `;
     }
 
-    function escapeHtml(str) { return String(str || '').replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+    function escapeHtml(str) { 
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) { 
+            if (m === '&') return '&amp;'; 
+            if (m === '<') return '&lt;'; 
+            if (m === '>') return '&gt;'; 
+            return m; 
+        });
+    }
 
     async function loadData() {
         const btn  = document.getElementById('refreshBtn');
         const icon = document.getElementById('refreshIcon');
-        btn.disabled = true; icon.className = 'fas fa-sync-alt animate-spin';
+        btn.disabled = true; 
+        icon.className = 'fas fa-sync-alt animate-spin';
 
         const sec = document.getElementById('uploadSection');
         sec.style.display = 'block';
@@ -568,33 +582,56 @@
             if (allRows.length < 2) throw new Error('Planilha sem dados.');
 
             const headerRow = allRows[0];
+            
+            // =========================================================
+            // TABELA PRINCIPAL: colunas A-R (índices 0 a 17)
+            // =========================================================
+            const MAIN_END = 18;  // índice 18 é a coluna S (vazia/ignorada)
+            headersMain = headerRow.slice(0, MAIN_END);
             detectMainIndexes(headerRow);
-            detectLiqIndexes(headerRow);  // detecta índices nas colunas T-Z
-
-            // Tabela principal: colunas de 0 até IDX_LIQ_FAV-1 (antes da coluna T)
-            const mainColsEnd = (IDX_LIQ_FAV >= 0) ? IDX_LIQ_FAV : 19;
-            headersMain = headerRow.slice(0, mainColsEnd);
-            allData = allRows.slice(1).map(row => row.slice(0, mainColsEnd)).filter(row => {
+            
+            // Filtra linhas com dados válidos na tabela principal
+            allData = [];
+            for (let i = 1; i < allRows.length; i++) {
+                const row = allRows[i].slice(0, MAIN_END);
                 const proc = String(row[IDX_PROCESSO] || '').trim();
                 const fav  = String(row[IDX_FAVORECIDO] || '').trim();
-                return proc && fav && proc !== 'Total' && fav !== 'Total';
-            });
-            filteredData = [...allData];
-
-            // Tabela de liquidações: colunas T-Z (índices 19 a 25)
-            if (IDX_LIQ_FAV >= 0) {
-                const liqColsStart = IDX_LIQ_FAV;
-                const liqColsEnd = Math.min(IDX_LIQ_TOTAL + 1, headerRow.length);
-                liqHeaders = headerRow.slice(liqColsStart, liqColsEnd);
-                liqTableRows = allRows.slice(1).map(row => row.slice(liqColsStart, liqColsEnd)).filter(row => {
-                    const fav = String(row[0] || '').trim();
-                    return fav && fav !== 'Total';
-                });
+                if (proc && fav && proc !== 'Total' && fav !== 'Total') {
+                    allData.push(row);
+                }
             }
-
-            // Constrói mapa de liquidações e cruza
+            filteredData = [...allData];
+            
+            // =========================================================
+            // TABELA DE LIQUIDAÇÕES: colunas T-Z (índices 19 a 25)
+            // =========================================================
+            const LIQ_START = 19;  // coluna T
+            const LIQ_END = 26;    // coluna Z + 1
+            
+            detectLiqIndexes(headerRow);
+            
+            liqTableRows = [];
+            for (let i = 1; i < allRows.length; i++) {
+                const row = allRows[i].slice(LIQ_START, LIQ_END);
+                // Verifica se a linha tem pelo menos um favorecido válido (coluna T)
+                const fav = String(row[0] || '').trim();
+                if (fav && fav !== 'Total') {
+                    liqTableRows.push(row);
+                }
+            }
+            
+            console.log(`Linhas de liquidação extraídas: ${liqTableRows.length}`);
+            console.log('Exemplo de linha de liquidação:', liqTableRows[0]);
+            
+            // =========================================================
+            // CRUZAMENTO
+            // =========================================================
             const liqMap = buildLiquidationMap(liqTableRows);
+            console.log(`Mapa de liquidações: ${Object.keys(liqMap).length} chaves`);
+            
             allMatches = findMatches(allData, liqMap);
+            console.log(`Matches encontradas: ${allMatches.length}`);
+            
             renderLiquidacaoPanel(allMatches);
 
             const now = new Date();
@@ -605,16 +642,19 @@
             document.getElementById('statusBadge').classList.remove('hidden');
             document.getElementById('statusBadge').classList.add('flex');
             renderDashboard();
+            
         } catch (err) {
+            console.error('Erro:', err);
             document.getElementById('loadingIcon').className = 'text-5xl text-red-500';
             document.getElementById('loadingIcon').innerHTML = '<i class="fas fa-exclamation-circle"></i>';
             document.getElementById('loadingTitle').textContent = 'Erro ao carregar';
             document.getElementById('loadingSubtitle').textContent = err.message + ' — Tente novamente.';
         }
-        btn.disabled = false; icon.className = 'fas fa-sync-alt';
+        btn.disabled = false; 
+        icon.className = 'fas fa-sync-alt';
     }
 
-    // Filtros
+    // ── FILTROS ──
     document.getElementById('searchGlobal').addEventListener('input', applyFilters);
     document.getElementById('searchProcesso').addEventListener('input', applyFilters);
     document.getElementById('searchFavorecido').addEventListener('input', applyFilters);
